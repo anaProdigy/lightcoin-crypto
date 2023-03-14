@@ -3,9 +3,26 @@ class Account {
   constructor(username) {
     this.username = username;
     // Have the account balance start at $0 since that makes more sense.
-    this.balance = 0;
+    this.transactions = [];
   }
 
+  get balance() {
+    // Calculate the balance using the transaction objects.
+    let balance = 0;
+    for (let transaction of this.transactions) {
+      if (transaction.constructor === Deposit) {
+        balance += transaction.amount;
+      } else if (transaction.constructor === Withdrawal) {
+        balance -= transaction.amount;
+      }
+    }
+
+return balance;
+  }
+
+  addTransaction(transaction) {
+    this.transactions.push(transaction);
+  }
 }
 
 class Transaction {
@@ -15,16 +32,24 @@ class Transaction {
     this.account = account;
   }
   commit() {
-    this.account.balance += this.amount;
+    if (!this.isAllowed()) return false;
+    // Keep track of the time of the transaction
+    this.time = new Date();
+    // Add the transaction to the account
+    this.account.addTransaction(this);
+    return true;
   }
 }
 
 class Deposit extends Transaction {
-get value () {
-  return this.amount;
-}
+  get value() {
+    return this.amount;
+  }
 
-
+  isAllowed() {
+    // deposits always allowed thanks to capitalism.
+    return true;
+  }
 }
 
 class Withdrawal extends Transaction {
@@ -32,7 +57,10 @@ class Withdrawal extends Transaction {
   get value() {
     return -this.amount;
   }
-
+  isAllowed() {
+    // note how it has access to this.account b/c of parent
+    return (this.account.balance - this.amount >= 0);
+  }
 }
 
 
@@ -57,6 +85,7 @@ class Withdrawal extends Transaction {
 
 // console.log('Balance:', myAccount.balance);
 
+//DRIVER CODE 2
 const myAccount = new Account('billybob');
 
 console.log('Starting Balance:', myAccount.balance);
